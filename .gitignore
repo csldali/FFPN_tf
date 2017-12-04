@@ -1,0 +1,4 @@
+*.pyc
+*.ckpt
+output/*
+train/output/*
