@@ -91,15 +91,20 @@ def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
     num_classes=_NUM_CLASSES)
 
 def read(tfrecords_filename):
-
+  print("COCO dataset read")
+  a = 0
   if not isinstance(tfrecords_filename, list):
     tfrecords_filename = [tfrecords_filename]
   filename_queue = tf.train.string_input_producer(
     tfrecords_filename, num_epochs=100)
-
+  print("test: ", str(a));a = a+1
   options = tf.python_io.TFRecordOptions(TFRecordCompressionType.ZLIB)
+  print("test", str(a));a = a+1
+
   reader = tf.TFRecordReader(options=options)
   _, serialized_example = reader.read(filename_queue)
+  print("test", str(a));a = a+1
+
   features = tf.parse_single_example(
     serialized_example,
     features={

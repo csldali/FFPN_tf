@@ -3,6 +3,10 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
+import sys, os
+print(sys.path)
+pth = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(pth,'../..'))
 
 import libs.boxes.cython_bbox as cython_bbox
 import libs.configs.config_v1 as cfg
@@ -10,8 +14,9 @@ from libs.boxes.bbox_transform import bbox_transform, bbox_transform_inv, clip_b
 from libs.logs.log import LOG 
 
 # FLAGS = tf.app.flags.FLAGS
+_DEBUG = False
 
-_DEBUG = False 
+
 
 def encode(gt_boxes, rois, num_classes):
   """Matching and Encoding groundtruth boxes (gt_boxes) into learning targets to boxes
@@ -28,10 +33,10 @@ def encode(gt_boxes, rois, num_classes):
   bbox_targets: of shape (N, Kx4) regression targets
   bbox_inside_weights: of shape (N, Kx4), in {0, 1} indicating which class is assigned.
   """
-  
+  if _DEBUG: print('roi.py encode start')
   all_rois = rois
-  num_rois = rois.shape[0]
-  if gt_boxes.size > 0: 
+  num_rois = rois.shape[0]; print('num_rois: ', num_rois)
+  if gt_boxes.size > 0:
       # R x G matrix
       overlaps = cython_bbox.bbox_overlaps(
         np.ascontiguousarray(all_rois[:, 0:4], dtype=np.float),
@@ -39,14 +44,14 @@ def encode(gt_boxes, rois, num_classes):
       gt_assignment = overlaps.argmax(axis=1)  # R
       # max_overlaps = overlaps.max(axis=1)      # R
       max_overlaps = overlaps[np.arange(rois.shape[0]), gt_assignment]
-      # note: this will assign every rois with a positive label 
+      # note: this will assign every rois with a positive label
       # labels = gt_boxes[gt_assignment, 4]
       labels = np.zeros([num_rois], dtype=np.float32)
       labels[:] = -1
 
-      # if _DEBUG:
-      #     print ('gt_assignment')
-      #     print (gt_assignment)
+      if _DEBUG:
+        print ('gt_assignment')
+        print (gt_assignment)
 
       # sample rois as to 1:3
       fg_inds = np.where(max_overlaps >= cfg.FLAGS.fg_threshold)[0]
@@ -83,12 +88,13 @@ def encode(gt_boxes, rois, num_classes):
 
       bbox_targets, bbox_inside_weights = _compute_targets(
         rois[keep_inds, 0:4], gt_boxes[gt_assignment[keep_inds], :4], labels[keep_inds], num_classes)
-      print("@@@@@ bb")
       bbox_targets = _unmap(bbox_targets, num_rois, keep_inds, 0)
       bbox_inside_weights = _unmap(bbox_inside_weights, num_rois, keep_inds, 0)
-   
+      if _DEBUG: print('roi.py returned ')
+
   else:
       # there is no gt
+      if _DEBUG: print('roi.py no gt')
       labels = np.zeros((num_rois, ), np.float32)
       bbox_targets = np.zeros((num_rois, 4 * num_classes), np.float32)
       bbox_inside_weights = np.zeros((num_rois, 4 * num_classes), np.float32)
@@ -135,27 +141,34 @@ def _compute_targets(ex_rois, gt_rois, labels, num_classes):
     bbox_inside_weights (ndarray): N x 4K blob of loss weights
   """
 
+  if _DEBUG: print("_compute_targets operate")
   assert ex_rois.shape[0] == gt_rois.shape[0]
   assert ex_rois.shape[1] == 4
   assert gt_rois.shape[1] == 4
 
   targets = bbox_transform(ex_rois, gt_rois)
+  if _DEBUG: print("targets shape", targets.shape)
 
   clss = labels
   bbox_targets = np.zeros((clss.size, 4 * num_classes), dtype=np.float32)
+  if _DEBUG: print('bbox_targets shape: ', bbox_targets.shape)
   bbox_inside_weights = np.zeros(bbox_targets.shape, dtype=np.float32)
   inds = np.where(clss > 0)[0]
+  if _DEBUG: print('inds: ', inds)
   for ind in inds:
     cls = int(clss[ind])
     start = 4 * cls
     end = start + 4
+    if _DEBUG: print('start ind: ', start)
     bbox_targets[ind, start:end] = targets[ind, 0:4]
     bbox_inside_weights[ind, start:end] = 1
+  if _DEBUG: print('end f1')
   return bbox_targets, bbox_inside_weights
 
 def _unmap(data, count, inds, fill=0):
   """ Unmap a subset of item (data) back to the original set of items (of
   size count) """
+  if _DEBUG: print ('_unmap oprate')
   if len(data.shape) == 1:
     ret = np.empty((count,), dtype=np.float32)
     ret.fill(fill)
@@ -164,6 +177,7 @@ def _unmap(data, count, inds, fill=0):
     ret = np.empty((count,) + data.shape[1:], dtype=np.float32)
     ret.fill(fill)
     ret[inds, :] = data
+  if _DEBUG: print ('end f2')
   return ret
 
 if __name__ == '__main__':
@@ -173,18 +187,23 @@ if __name__ == '__main__':
   s = np.random.randint(10, 20, (10, 2))
   s = boxes + s
   boxes = np.concatenate((boxes, s), axis=1)
+  #print('boxes ', boxes)
   gt_boxes = np.hstack((boxes, classes))
+  #print ('gt_boxes ', gt_boxes)
   noise = np.random.randint(-3, 3, (10, 4))
-  rois = gt_boxes[:, :4] + noise
-  print (rois)
-  labels, rois, bbox_targets, bbox_inside_weights = encode(gt_boxes, rois, num_classes=3)
-  print (labels)
-  print (bbox_inside_weights)
+  rois = gt_boxes[::-1, :4] + noise
+  #print("rois:");print (rois)
+  labels,  bbox_targets, bbox_inside_weights = encode(gt_boxes, rois, num_classes=3)
+  print ('bbox_target ', bbox_targets)
+  print ('labels ', labels)
+  print ('bbox_inside_weights ', bbox_inside_weights)
   
   ls = np.zeros((labels.shape[0], 3))
   for i in range(labels.shape[0]):
-    ls[i, labels[i]] = 1
+    print('labels[i]: ', labels[i])
+    ls[i, int(round(labels[i]))] = 1
   final_boxes, classes, scores = decode(bbox_targets, ls, rois, 100, 100)
   print('gt_boxes:\n', gt_boxes)
   print ('final boxes:\n', np.hstack((final_boxes, np.expand_dims(classes, axis=1))).astype(np.int32))
-  # print (final_boxes.astype(np.int32))
+  if _DEBUG:
+    print (final_boxes.astype(np.int32))

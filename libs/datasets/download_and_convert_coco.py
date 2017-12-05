@@ -238,6 +238,7 @@ def _add_to_tfrecord(record_dir, image_dir, annotation_dir, split_name):
 
   assert split_name in ['train2014', 'val2014', 'valminusminival2014', 'minival2014']
   annFile = os.path.join(annotation_dir, 'instances_%s.json' % (split_name))
+  print ("Loading annotation: ", annFile)
   
   coco = COCO(annFile)
 

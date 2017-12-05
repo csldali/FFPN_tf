@@ -52,7 +52,7 @@ from matplotlib.patches import Polygon
 import numpy as np
 import copy
 import itertools
-#from libs.datasets.pycocotools import mask as maskUtils # change importing
+from libs.datasets.pycocotools import mask as maskUtils # change importing
 import os
 from collections import defaultdict
 import sys
@@ -397,32 +397,33 @@ class COCO:
                 }]
         return ann
 
-#    def annToRLE(self, ann):
+    def annToRLE(self, ann):
         """
         Convert annotation which can be polygons, uncompressed RLE to RLE.
         :return: binary mask (numpy 2D array)
         """
-#        t = self.imgs[ann['image_id']]
-#        h, w = t['height'], t['width']
-#        segm = ann['segmentation']
-#        if type(segm) == list:
-#            # polygon -- a single object might consist of multiple parts
-#            # we merge all parts into one mask rle code
-#            rles = maskUtils.frPyObjects(segm, h, w)
- #           rle = maskUtils.merge(rles)
- #       elif type(segm['counts']) == list:
-#            # uncompressed RLE
-#            rle = maskUtils.frPyObjects(segm, h, w)
-#        else:
-#            # rle
-#            rle = ann['segmentation']
-#        return rle
+        t = self.imgs[ann['image_id']]
+        h, w = t['height'], t['width']
+        segm = ann['segmentation']
+        if type(segm) == list:
+            # polygon -- a single object might consist of multiple parts
+            # we merge all parts into one mask rle code
+            rles = maskUtils.frPyObjects(segm, h, w)
+            rle = maskUtils.merge(rles)
+        elif type(segm['counts']) == list:
+            # uncompressed RLE
+            rle = maskUtils.frPyObjects(segm, h, w)
+        else:
+            # rle
+            rle = ann['segmentation']
+        return rle
 
-#    def annToMask(self, ann):
+
+    def annToMask(self, ann):
         """
         Convert annotation which can be polygons, uncompressed RLE, or RLE to binary mask.
         :return: binary mask (numpy 2D array)
         """
-#        rle = self.annToRLE(ann)
-#        m = maskUtils.decode(rle)
-#        return m
+        rle = self.annToRLE(ann)
+        m = maskUtils.decode(rle)
+        return m

@@ -12,9 +12,9 @@ tf.app.flags.DEFINE_string(
     'Directory where checkpoints and event logs are written to.')
 
 tf.app.flags.DEFINE_string(
-    'pretrained_model', './data/pretrained_models/resnet_v1_50.ckpt',
+    'pretrained_model', './resnet_v1_50.ckpt',
     'Path to pretrained model')
-
+# ./data/pretrained_models/resnet_v1_50.ckpt
 ##########################
 #                  network
 ##########################
@@ -38,11 +38,11 @@ tf.app.flags.DEFINE_string(
     'The name of the dataset to load.')
 
 tf.app.flags.DEFINE_string(
-    'dataset_split_name', 'train',
+    'dataset_split_name', 'train2014',
     'The name of the train/test/val split.')
 
 tf.app.flags.DEFINE_string(
-    'dataset_dir', 'data/city/',
+    'dataset_dir', '/mnt/data/coco',
     'The directory where the dataset files are stored.')
 
 tf.app.flags.DEFINE_integer(
@@ -220,7 +220,7 @@ tf.app.flags.DEFINE_boolean(
     'When restoring a checkpoint would ignore missing variables.')
 
 tf.app.flags.DEFINE_boolean(
-    'restore_previous_if_exists', True,
+    'restore_previous_if_exists', False,
     'When restoring a checkpoint would ignore missing variables.')
 
 #######################

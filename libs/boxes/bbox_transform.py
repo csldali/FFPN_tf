@@ -7,6 +7,7 @@
 
 import numpy as np
 import warnings
+_DEBUG = False
 
 def bbox_transform(ex_rois, gt_rois):
     """
@@ -15,14 +16,15 @@ def bbox_transform(ex_rois, gt_rois):
     :param gt_rois: n * 4 numpy array, ground-truth boxes
     :return: deltas: n * 4 numpy array, ground-truth boxes
     """
+    if _DEBUG: print ('bbox transfrom opearte')
     ex_widths = ex_rois[:, 2] - ex_rois[:, 0] + 1.0
     ex_heights = ex_rois[:, 3] - ex_rois[:, 1] + 1.0
     ex_ctr_x = ex_rois[:, 0] + 0.5 * ex_widths
     ex_ctr_y = ex_rois[:, 1] + 0.5 * ex_heights
 
-    assert np.min(ex_widths) > 0.1 and np.min(ex_heights) > 0.1, \
-        'Invalid boxes found: {} {}'. \
-            format(ex_rois[np.argmin(ex_widths), :], ex_rois[np.argmin(ex_heights), :])
+    assert np.min(ex_widths) > 0.1 and np.min(ex_heights) > 0.1, 'bbox_transfrom Assert Error'
+        # 'Invalid boxes found: {} {}'. \
+            # format(ex_rois[np.argmin(ex_widths), :], ex_rois[np.argmin(ex_heights), :])
 
     gt_widths = gt_rois[:, 2] - gt_rois[:, 0] + 1.0
     gt_heights = gt_rois[:, 3] - gt_rois[:, 1] + 1.0
@@ -38,6 +40,7 @@ def bbox_transform(ex_rois, gt_rois):
 
     targets = np.vstack(
         (targets_dx, targets_dy, targets_dw, targets_dh)).transpose()
+    if _DEBUG: print('bbox_transform end~')
     return targets
 
 def bbox_transform_inv(boxes, deltas):

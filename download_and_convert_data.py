@@ -4,11 +4,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys, os
+print (os.path.realpath(__file__))
 import tensorflow as tf
 
 from libs.datasets import download_and_convert_coco
-from libs.datasets import convert_city
+#from libs.datasets import convert_city
 from libs.configs import config_v1
+
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -22,6 +25,8 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def main(_):
+
+
   if not FLAGS.dataset_name:
     raise ValueError('You must supply the dataset name with --dataset_name')
   if not FLAGS.dataset_dir:
@@ -29,8 +34,8 @@ def main(_):
 
   elif FLAGS.dataset_name == 'coco':
     download_and_convert_coco.run(FLAGS.dataset_dir, FLAGS.dataset_split_name)
-  elif FLAGS.dataset_name == 'city':
-    convert_city.run(FLAGS.dataset_dir, FLAGS.dataset_split_name)
+  elif FLAGS.dataset_name == 'city': pass
+    #convert_city.run(FLAGS.dataset_dir, FLAGS.dataset_split_name)
   else:
     raise ValueError(
         'dataset_name [%s] was not recognized.' % FLAGS.dataset_dir)
